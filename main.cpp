@@ -28,15 +28,15 @@ int main(int argc, char** argv)
 {
     Kokkos::initialize(argc, argv);
 
-    if (argc != 2)
-    {
-        std::cerr << "Wrong amount of arguments, only takes array size";
-        exit(1);
-    }
-    
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 3000);
+
+    Kokkos::parallel_for("Parallel loop", N, KOKKOS_LAMBDA (const int i) {
+        printf("Hello world! from thread %i\n", i);
+    });
+
+    Kokkos::fence();
 
     double avgSpeedup = 0;
     for (int t = 0; t < 10; ++t)
@@ -62,6 +62,8 @@ int main(int argc, char** argv)
                 }
             });
         });
+
+        Kokkos::fence();
 
         double paraTime = timer.seconds();
 
@@ -100,7 +102,7 @@ int main(int argc, char** argv)
 
         avgSpeedup += speedup / 10;
     }
-    std::cout << "Average Speedup: " << avgSpeedup << std::endl;
-        Kokkos::finalize();
+    std::cout << "Average Speedup for array size " << N << ": " << avgSpeedup << std::endl;
+    Kokkos::finalize();
     return 0;
 }
